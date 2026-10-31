@@ -17,6 +17,7 @@ import {
 } from '@word-lagos/multiplayer';
 import type { Match, Player, Store } from './store';
 import { Vatar } from './vatar';
+import { wakeRecovery } from './recovery';
 
 export class MatchError extends Error {}
 export class Matches {
@@ -310,6 +311,7 @@ export class Matches {
     };
     if (!(await this.store.save(next, match.revision)))
       throw new MatchError('Another move arrived first. Review the board and try again.');
+    if (next.game.status === 'finished' && next.platform) wakeRecovery();
     return next;
   }
 }

@@ -14,6 +14,7 @@ import type { Store } from './store';
 import { friendRoom } from './room';
 import { VatarError } from './vatar';
 import { Purchases, themeProduct, themeProducts } from './purchases';
+import { wakeRecovery } from './recovery';
 export async function startServer({
   store,
   auth,
@@ -37,6 +38,11 @@ export async function startServer({
   const diamondEnvironment = purchases?.mode ?? 'local';
   const hints = new Hints(store, matches, diamondEnvironment);
   app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(req.method))
+      res.once('finish', wakeRecovery);
+    next();
+  });
   // Railway supplies one trusted reverse proxy hop. Never trust arbitrary client IP headers locally.
   if (production) app.set('trust proxy', 1);
   app.use((_req, res, next) => {

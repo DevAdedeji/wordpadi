@@ -40,6 +40,15 @@ const remote = (id: string) => ({
 });
 
 describe('verified cosmetic purchases', () => {
+  it('keeps recovery active only for unfinished durable work', async () => {
+    const id = randomUUID();
+    expect(await store.hasPendingRecovery('test', true)).toBe(false);
+    await store.grantPurchase(purchase(id, 'recovery-only') as import('./vatar').Purchase);
+    expect(await store.hasPendingRecovery('test', false)).toBe(true);
+    await store.deliveredPurchase(id, 'test');
+    expect(await store.hasPendingRecovery('test', true)).toBe(false);
+  });
+
   it('grants once across concurrent claims and retains ownership after delivery', async () => {
     const id = randomUUID();
     const provider = new Vatar('vtr_test_secret', undefined, async (url) =>

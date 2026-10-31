@@ -10,6 +10,7 @@ import { Matches } from './matches';
 import { openStore } from './store';
 import { Vatar } from './vatar';
 import { Purchases } from './purchases';
+import { startRecovery } from './recovery';
 
 const envPath = fileURLToPath(new URL('../../../.env', import.meta.url));
 if (existsSync(envPath)) loadEnvFile(envPath);
@@ -72,26 +73,22 @@ const server = await startServer({
 console.info(
   JSON.stringify({ event: 'server_ready', port: server.port, authMode: config.AUTH_MODE }),
 );
-let recovery: Promise<void> | null = null;
-const recover = () => {
-  if (recovery) return;
-  recovery = (async () => {
+const stopRecovery = startRecovery({
+  run: async () => {
     await purchases?.retryPending();
     await matches.retryResults();
-  })()
-    .catch(() => console.warn(JSON.stringify({ event: 'platform_recovery_failed' })))
-    .finally(() => {
-      recovery = null;
-    });
-};
-const recoveryTimer = setInterval(recover, 15000);
-recover();
+  },
+  hasPending: () =>
+    provider
+      ? store.hasPendingRecovery(provider.mode, provider.matchesEnabled)
+      : Promise.resolve(false),
+  onError: () => console.warn(JSON.stringify({ event: 'platform_recovery_failed' })),
+});
 let stopping = false;
 async function shutdown() {
   if (stopping) return;
   stopping = true;
-  clearInterval(recoveryTimer);
-  await recovery;
+  await stopRecovery();
   await server.close();
   await store.close();
 }

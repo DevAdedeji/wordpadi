@@ -153,6 +153,16 @@ export async function openStore(databaseUrl?: string, localPath?: string) {
   };
   return {
     diamonds,
+    async hasPendingRecovery(environment: string, matchesEnabled: boolean): Promise<boolean> {
+      const result = await db.execute(sql`select
+        exists (select 1 from vatar_purchases where environment = ${environment} and status = 'pending')
+        or (${matchesEnabled} and exists (select 1 from friend_matches
+          where data->>'environment' = ${environment}
+          and data->'game'->>'status' = 'finished'
+          and data->'platform'->>'result' = 'pending'
+          and data->'platform'->>'nonce' is not null)) as pending`);
+      return z.object({ pending: z.boolean() }).parse(result.rows[0]).pending;
+    },
     async grantPurchase(purchase: Purchase): Promise<void> {
       await db
         .insert(purchases)
