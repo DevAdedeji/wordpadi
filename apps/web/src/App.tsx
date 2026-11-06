@@ -526,8 +526,9 @@ export default function App() {
         : `${opponentName} takes this one.`;
   return (
     <div
+      data-embedded={window.self !== window.top}
       onClickCapture={tileDrag.clickCapture}
-      className={`app-shell min-[761px]:min-h-screen bg-paper text-forest theme-${platform.previewTheme ?? platform.theme}`}
+      className={`app-shell text-forest theme-${platform.previewTheme ?? platform.theme}`}
     >
       {tileDrag.drag && draggedTile && (
         <div
@@ -623,7 +624,7 @@ export default function App() {
           {diamonds.balance === null ? 'Diamonds' : Math.max(0, diamonds.balance)}
         </button>
         <span className="header-note">
-          <span /> A little wordplay. Better with friends.
+          <span /> YOUR WORD. YOUR MOVE.
         </span>
         <button
           className="quiet-button"
@@ -633,7 +634,18 @@ export default function App() {
           <Layers size={18} /> My games{' '}
           {turnCount > 0 && <span className="tab-count">{turnCount}</span>}
         </button>
-        <button className="quiet-button help-button" onClick={() => setModal('help')}>
+        <button
+          className="new-game-button header-new-game"
+          disabled={friend.pending || diamonds.busy}
+          onClick={() => setModal('new')}
+        >
+          <Plus size={17} /> New game
+        </button>
+        <button
+          className="quiet-button help-button"
+          aria-label="How to play"
+          onClick={() => setModal('help')}
+        >
           <CircleHelp size={17} />
           <span>How to play</span>
         </button>
@@ -800,7 +812,12 @@ export default function App() {
                     }),
                   )}
                   {draft.length ? (
-                    preview.words && <WordFeedback words={preview.words} />
+                    preview.words && (
+                      <WordFeedback
+                        words={preview.words}
+                        total={preview.ok ? preview.score : undefined}
+                      />
+                    )
                   ) : opponentPlayed ? (
                     <WordFeedback
                       words={opponentFeedback}

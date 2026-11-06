@@ -33,8 +33,17 @@ export default function WordFeedback({
             <span className="word-status-marker">
               {word.valid ? <Check size={12} /> : <X size={12} />}
             </span>
-            {(!opponent || index === 0) && (
-              <span className="word-points-marker">{opponent ? total : word.score}</span>
+            {(total === undefined || index === 0) && (
+              <span
+                className="word-points-marker"
+                aria-label={`${total ?? word.score} ${total === undefined ? 'word' : 'total'} points`}
+                style={{
+                  right: last.col === 14 ? 0 : undefined,
+                  bottom: last.row === 14 ? 0 : undefined,
+                }}
+              >
+                {total ?? word.score}
+              </span>
             )}
           </div>
         );
